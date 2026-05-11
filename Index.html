@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #2986B0;
+      --primary-light: #7ED6D1;
+      --accent: #F59E0B;
+      --gold-dark: #A86417;
+      --dark: #222222;
+      --bg: #F5F5F5;
+      --white: #FFFFFF;
+      --muted: #64748b;
+      --border: #e5e7eb;
+      --danger: #b91c1c;
+      --danger-bg: #fee2e2;
+      --success: #166534;
+      --success-bg: #dcfce7;
+    }
+
+    * { box-sizing: border-box; font-family: 'Cairo', Tahoma, Arial, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--dark); }
+
+    .sidebar {
+      position: fixed; right: 0; top: 0; width: 280px; height: 100vh;
+      background: linear-gradient(180deg, #2986B0 0%, #1d5f7d 65%, #222222 100%);
+      color: white; padding: 22px; box-shadow: 0 0 25px rgba(0,0,0,0.18); overflow-y: auto;
+    }
+    .logo { width: 112px; height: 112px; object-fit: cover; border-radius: 50%; display: block; margin: 0 auto 16px; border: 4px solid rgba(255,255,255,0.25); background: white; }
+    .sidebar h2 { text-align: center; margin: 0 0 6px; font-size: 28px; font-weight: 800; }
+    .sidebar .subtitle { text-align: center; color: rgba(255,255,255,0.82); font-size: 13px; margin-bottom: 26px; }
+    .sidebar button { width: 100%; padding: 14px 16px; margin-bottom: 11px; background: rgba(255,255,255,0.09); color: white; border: 1px solid rgba(255,255,255,0.12); border-radius: 15px; cursor: pointer; font-size: 15px; font-weight: 700; text-align: right; transition: all 0.25s ease; }
+    .sidebar button:hover, .sidebar button.current { background: var(--accent); transform: translateX(-4px); box-shadow: 0 8px 18px rgba(0,0,0,0.16); }
+
+    .main { margin-right: 300px; padding: 26px; }
+    .topbar { background: white; padding: 18px 22px; border-radius: 22px; margin-bottom: 22px; display: flex; justify-content: space-between; align-items: center; gap: 16px; box-shadow: 0 8px 22px rgba(0,0,0,0.06); border: 1px solid rgba(41,134,176,0.08); }
+    .topbar h1 { margin: 0; color: var(--dark); font-size: 26px; font-weight: 800; }
+    .year-box { display: flex; align-items: center; gap: 10px; min-width: 210px; }
+    .year-box label { color: var(--muted); font-weight: 700; white-space: nowrap; }
+    .status { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .content { display: none; animation: fade 0.25s ease; }
+    .active { display: block; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 22px; }
+    .card, .box { background: white; border-radius: 22px; padding: 23px; box-shadow: 0 8px 22px rgba(0,0,0,0.06); border: 1px solid rgba(41,134,176,0.08); margin-bottom: 22px; }
+    .card { border-top: 5px solid var(--primary); transition: 0.25s ease; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 13px 28px rgba(0,0,0,0.09); }
+    .card h3 { color: var(--muted); font-size: 15px; margin: 0 0 10px; font-weight: 700; }
+    .value { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1.4; }
+    .box h2, .box h3 { margin-top: 0; color: var(--dark); font-weight: 800; }
+
+    input, select { width: 100%; padding: 13px 14px; margin-top: 10px; border: 1px solid #cbd5e1; border-radius: 14px; font-size: 15px; background: white; transition: 0.2s; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(41,134,176,0.15); }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px 14px; }
+
+    .submit, .print-btn { width: 100%; padding: 14px; margin-top: 15px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #2986B0, #7ED6D1); color: white; font-size: 16px; font-weight: 800; cursor: pointer; transition: 0.25s ease; }
+    .submit:hover, .print-btn:hover { transform: scale(1.01); box-shadow: 0 8px 18px rgba(41,134,176,0.25); }
+    .secondary { background: linear-gradient(135deg, #F59E0B, #A86417); }
+    .danger { background: var(--danger-bg) !important; color: var(--danger) !important; box-shadow: none !important; }
+    .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
+    .inline-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .edit-btn, .cancel-btn { padding: 8px 12px; border: 0; border-radius: 10px; color: white; font-weight: 800; cursor: pointer; }
+    .edit-btn { background: var(--primary); }
+    .cancel-btn { background: var(--danger); }
+    .edit-note { display: none; margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #fff7ed; color: var(--gold-dark); font-weight: 800; }
+    .edit-note.active { display: block; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; overflow: hidden; border-radius: 14px; }
+    th, td { padding: 13px; border-bottom: 1px solid var(--border); text-align: center; font-size: 14px; }
+    th { background: var(--primary); color: white; font-weight: 800; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .table-wrap { overflow-x: auto; }
+    .error, .success { padding: 12px 14px; border-radius: 12px; margin-top: 12px; font-weight: 700; }
+    .error { color: var(--danger); background: var(--danger-bg); }
+    .success { color: var(--success); background: var(--success-bg); }
+    .chart-wrap { min-height: 320px; }
+    .print-note { color: var(--muted); font-size: 13px; margin-top: -6px; margin-bottom: 12px; }
+    .brand-header { display: none; align-items: center; justify-content: center; gap: 14px; border-bottom: 3px solid var(--primary); padding-bottom: 14px; margin-bottom: 18px; }
+    .brand-header img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); }
+    .brand-title { font-size: 25px; font-weight: 800; color: var(--primary); }
+    .brand-subtitle { color: var(--muted); font-weight: 700; }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .empty { color: var(--muted); text-align: center; padding: 16px; }
+
+
+
+    .login-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top right, rgba(126,214,209,0.28), transparent 34%), linear-gradient(135deg, #2986B0 0%, #1d5f7d 48%, #222222 100%); }
+    .login-card { width: min(440px, 100%); background: rgba(255,255,255,0.96); border: 1px solid rgba(255,255,255,0.35); border-radius: 28px; padding: 30px; box-shadow: 0 24px 60px rgba(0,0,0,0.22); text-align: center; }
+    .login-card .logo { margin-bottom: 12px; box-shadow: 0 10px 25px rgba(41,134,176,0.22); }
+    .login-card h1 { margin: 0; color: var(--primary); font-size: 30px; font-weight: 800; }
+    .login-card p { margin: 7px 0 18px; color: var(--muted); font-weight: 700; }
+    .login-card input { text-align: right; }
+    .login-help { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .app-shell { display: none; }
+    .app-shell.signed-in { display: block; }
+    .admin-badge { margin: 16px 0 12px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14); font-size: 13px; line-height: 1.7; }
+    .logout-btn { background: rgba(185,28,28,0.55) !important; }
+    .role-chip { display:inline-block; padding: 6px 10px; border-radius: 999px; background:#eef6ff; color: var(--primary); font-weight: 800; font-size: 12px; }
+
+    @media print {
+      @page { size: A4; margin: 12mm; }
+      body { background: white; }
+      .sidebar, .topbar, .no-print, .actions, .chart-wrap { display: none !important; }
+      .main { margin: 0; padding: 0; }
+      .content { display: none !important; }
+      .content.print-target { display: block !important; }
+      .box, .card, .topbar { box-shadow: none; border: 0; }
+      .brand-header { display: flex !important; }
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
+    }
+
+    @media(max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    @media(max-width: 800px) { .sidebar { position: relative; width: 100%; height: auto; } .main { margin-right: 0; padding: 16px; } .topbar { display: block; } .year-box { margin-top: 12px; min-width: auto; } }
+  </style>
+</head>
+
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <img class="logo brand-logo" src="https://scontent.fogx1-1.fna.fbcdn.net/v/t39.30808-6/327352070_2989580661351512_6179979542828320358_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeHb9JHku7ZSuDNWpQMw8cY3iiVEWEa9k1CKJURYRr2TUH9bCAsJ_V6KYA7P9Tpl46IxYiOOBR5SiIqLUwNUmMuv&_nc_ohc=GhA_5ai33TgQ7kNvwHXgjf-&_nc_oc=AdpzBO9J5fce0rKSLalkOy7UL7oql4IIBdVkKT4pn0M3TrWhHvFS9mneVmeVMfOihu0&_nc_zt=23&_nc_ht=scontent.fogx1-1.fna&_nc_gid=2nwWWspZn_75JEGttH7j1A&_nc_ss=7b2a8&oh=00_Af6XODE8Pg7tIj_GuX-HNg753Wg7eYvYKkpjRcDt1uQ_Qg&oe=6A07B3C8">
+    <h1>دخول الإدارة</h1>
+    <p>جمعية الجواهر بقمار Association Al-Djawahir Guemar
+ | لوحة الإدارة المالية</p>
+    <input id="loginUsername" placeholder="اسم الدخول" autocomplete="username">
+    <input id="loginPassword" type="password" placeholder="كلمة المرور" autocomplete="current-password" onkeydown="if(event.key==='Enter') login()">
+    <button class="submit" onclick="login()">تسجيل الدخول</button>
+    <div id="loginMsg"></div>
+    <div class="login-help">أول دخول افتراضي بعد setup: <b>admin</b> / <b>admin123</b><br>غيّرها بإضافة أدمن جديد من لوحة الصلاحيات.</div>
+  </div>
+</div>
+
+<div id="appShell" class="app-shell">
+
+<div class="sidebar">
+  <img class="logo brand-logo" src="https://scontent.fogx1-1.fna.fbcdn.net/v/t39.30808-6/327352070_2989580661351512_6179979542828320358_n.jpg?_nc_cat=105&ccb=1-7&_nc_sid=1d70fc&_nc_eui2=AeHb9JHku7ZSuDNWpQMw8cY3iiVEWEa9k1CKJURYRr2TUH9bCAsJ_V6KYA7P9Tpl46IxYiOOBR5SiIqLUwNUmMuv&_nc_ohc=GhA_5ai33TgQ7kNvwHXgjf-&_nc_oc=AdpzBO9J5fce0rKSLalkOy7UL7oql4IIBdVkKT4pn0M3TrWhHvFS9mneVmeVMfOihu0&_nc_zt=23&_nc_ht=scontent.fogx1-1.fna&_nc_gid=2nwWWspZn_75JEGttH7j1A&_nc_ss=7b2a8&oh=00_Af6XODE8Pg7tIj_GuX-HNg753Wg7eYvYKkpjRcDt1uQ_Qg&oe=6A07B3C8">
+  <h2>جمعية الجواهر بقمار Association Al-Djawahir Guemar
+</h2>
+  <div class="subtitle">لوحة الإدارة المالية</div>
+  <div class="admin-badge" id="adminBadge">غير مسجل</div>
+
+  <button class="current nav-dashboard" onclick="showTab('dashboard', this)">لوحة التحكم</button>
+  <button onclick="showTab('revenues', this)">الإيرادات</button>
+  <button onclick="showTab('expenses', this)">النفقات</button>
+  <button onclick="showTab('balances', this)">أرصدة أول السنة</button>
+  <button onclick="showTab('reports', this)">التقرير السنوي</button>
+  <button class="super-only" onclick="showTab('admins', this); loadAdmins();">إدارة الأدمن والصلاحيات</button>
+  <button class="logout-btn" onclick="logout()">تسجيل الخروج</button>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>لوحة المدير المالي</h1>
+      <div class="status" id="syncStatus">جاهز للتحديث التلقائي</div>
+    </div>
+    <div class="year-box">
+      <label for="yearFilter">السنة</label>
+      <input type="number" id="yearFilter" value="2026" onchange="loadReport(true)">
+    </div>
+  </div>
+
+  <div id="dashboard" class="content active print-target">
+    <div class="brand-header"><img class="brand-logo"><div><div class="brand-title">جمعية الجواهر بقمار Association Al-Djawahir Guemar
+</div><div class="brand-subtitle">جدول الإيرادات والمصروفات</div></div></div>
+    <div class="cards">
+      <div class="card"><h3>إجمالي الإيرادات</h3><div class="value" id="totalRevenue">0 دج</div></div>
+      <div class="card"><h3>إجمالي النفقات</h3><div class="value" id="totalExpense">0 دج</div></div>
+      <div class="card"><h3>الرصيد النهائي</h3><div class="value" id="finalBalance">0 دج</div></div>
+      <div class="card"><h3>رصيد البنك</h3><div class="value" id="bankBalance">0 دج</div></div>
+    </div>
+
+    <div class="box chart-wrap">
+      <h2>نظرة مالية عامة</h2>
+      <canvas id="financeChart"></canvas>
+    </div>
+
+    <div class="actions no-print">
+      <button class="print-btn" onclick="printSection('dashboard')">طباعة جدول الإيرادات والمصروفات</button>
+      <button class="print-btn" onclick="printTableOnly('revenues')">طباعة جدول الإيرادات فقط</button>
+      <button class="print-btn" onclick="printTableOnly('expenses')">طباعة جدول المصروفات فقط</button>
+      <button class="print-btn secondary" onclick="loadReport(true)">تحديث الآن</button>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="box">
+        <h2>جدولة الإيرادات داخل لوحة التحكم</h2>
+        <div class="table-wrap" id="dashboardRevenues"></div>
+      </div>
+      <div class="box">
+        <h2>جدولة المصروفات داخل لوحة التحكم</h2>
+        <div class="table-wrap" id="dashboardExpenses"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="revenues" class="content">
+    <div class="box">
+      <h2>إضافة إيراد</h2>
+      <div class="form-grid">
+        <input id="revTitle" placeholder="تعيين الإيراد">
+        <input id="revDate" type="date">
+        <input id="revAmount" type="number" placeholder="المبلغ">
+        <select id="revMethod"><option value="نقدا">نقدا</option><option value="البنك">عبر البنك</option><option value="البريد">عبر البريد</option></select>
+        <select id="revSource"><option>البلدية</option><option>الولاية</option><option>المحسنين</option><option>اشتراكات</option><option>أخرى</option></select>
+        <input id="revTransfer" placeholder="رقم الحوالة">
+      </div>
+      <div id="revEditNote" class="edit-note">وضع التعديل مفعل: سيتم تحديث الإيراد المحدد بدل إضافة إيراد جديد.</div>
+      <button id="revSaveBtn" class="submit" onclick="saveRevenue()">حفظ الإيراد</button>
+      <button id="revCancelBtn" class="submit secondary" style="display:none" onclick="cancelRevenueEdit()">إلغاء التعديل</button>
+      <div id="revMsg"></div>
+    </div>
+  </div>
+
+  <div id="expenses" class="content">
+    <div class="box">
+      <h2>إضافة نفقة</h2>
+      <div class="form-grid">
+        <input id="expTitle" placeholder="تعيين النفقة">
+        <input id="expDate" type="date">
+        <input id="expAmount" type="number" placeholder="المبلغ">
+        <select id="expMethod"><option value="نقدا">نقدا</option><option value="البنك">عبر البنك</option><option value="البريد">عبر البريد</option></select>
+        <select id="expCategory"><option>الولادة</option><option>الختان</option><option>مساعدات مالية</option><option>مصاريف رحلة</option><option>مصاريف إدارية</option><option>أخرى</option></select>
+        <input id="expTransfer" placeholder="رقم الحوالة">
+      </div>
+      <div id="expEditNote" class="edit-note">وضع التعديل مفعل: سيتم تحديث النفقة المحددة بدل إضافة نفقة جديدة.</div>
+      <button id="expSaveBtn" class="submit" onclick="saveExpense()">حفظ النفقة</button>
+      <button id="expCancelBtn" class="submit secondary" style="display:none" onclick="cancelExpenseEdit()">إلغاء التعديل</button>
+      <div id="expMsg"></div>
+    </div>
+  </div>
+
+  <div id="balances" class="content">
+    <div class="box">
+      <h2>أرصدة أول السنة</h2>
+      <div class="form-grid">
+        <input id="balanceYear" type="number" placeholder="السنة مثلا 2026">
+        <input id="openingBank" type="number" placeholder="رصيد البنك أول السنة">
+        <input id="openingPost" type="number" placeholder="رصيد البريد أول السنة">
+        <input id="openingCash" type="number" placeholder="رصيد الصندوق أول السنة">
+      </div>
+      <button class="submit secondary" onclick="loadOpeningBalance()">جلب أرصدة السنة</button>
+      <button class="submit" onclick="saveOpeningBalance()">حفظ / تعديل الأرصدة</button>
+      <button class="submit secondary" onclick="transferBalance()">تحويل رصيد السنة السابقة إلى أول السنة</button>
+      <div id="balanceMsg"></div>
+    </div>
+  </div>
+
+  <div id="reports" class="content">
+    <div class="box">
+      <div class="brand-header"><img class="brand-logo"><div><div class="brand-title">جمعية الجواهر بقمار Association Al-Djawahir Guemar
+</div><div class="brand-subtitle">التقرير المالي السنوي</div></div></div>
+      <h2>التقرير المالي السنوي</h2>
+      <div class="print-note">يمكن طباعة التقرير مع الشعار والهوية البصرية.</div>
+      <div class="actions no-print"><button class="submit" onclick="loadReport(true)">تحديث التقرير</button><button class="submit secondary" onclick="printSection('reports')">طباعة التقرير</button></div>
+      <div id="reportArea"></div>
+    </div>
+  </div>
+
+  <div id="admins" class="content super-only">
+    <div class="box">
+      <h2>إضافة أدمن وتحديد الصلاحيات</h2>
+      <div class="form-grid">
+        <input id="adminName" placeholder="اسم الأدمن">
+        <input id="adminUsername" placeholder="اسم الدخول">
+        <input id="adminPassword" type="password" placeholder="كلمة المرور">
+        <select id="adminRole">
+          <option value="super">ادمن جميع الصلاحيات</option>
+          <option value="editor">محرر تعديل</option>
+          <option value="viewer">مشاهد - طباعة التقارير فقط</option>
+        </select>
+      </div>
+      <button class="submit" onclick="addAdminUser()">إضافة الأدمن</button>
+      <div id="adminMsg"></div>
+    </div>
+    <div class="box">
+      <h2>قائمة الأدمن</h2>
+      <div id="adminsTable" class="table-wrap"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+
+<script>
+// =====================================================
+// إعداد الربط مع Google Apps Script
+// 1) انشر ملف Code.gs كـ Web App
+// 2) انسخ رابط /exec وضعه هنا بدل النص التالي
+// مثال: https://script.google.com/macros/s/XXXXX/exec
+const APPS_SCRIPT_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzXcCVrdg__wop67f41ynk9K7rM9lo_7W3_VIGB-mjnbQ11aHsTBpbkzcHcDWf-AH0/exec';
+
+async function apiRequest(action, args) {
+  if (!APPS_SCRIPT_WEB_APP_URL || APPS_SCRIPT_WEB_APP_URL.includes('ضع_رابط')) {
+    throw new Error('يرجى وضع رابط Google Apps Script Web App داخل ملف index.html في المتغير APPS_SCRIPT_WEB_APP_URL');
+  }
+  const res = await fetch(APPS_SCRIPT_WEB_APP_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, args: Array.from(args || []) })
+  });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'حدث خطأ غير معروف');
+  return json.data;
+}
+
+// محاكاة google.script.run حتى يبقى كود الواجهة كما هو خارج Apps Script
+window.google = window.google || {};
+window.google.script = window.google.script || {};
+window.google.script.run = new Proxy({}, {
+  get(target, prop) {
+    if (prop === 'withSuccessHandler') {
+      return function(successHandler) {
+        return new Proxy({}, {
+          get(t2, prop2) {
+            if (prop2 === 'withFailureHandler') {
+              return function(failureHandler) {
+                return new Proxy({}, {
+                  get(t3, action) {
+                    return function(...args) {
+                      apiRequest(action, args).then(successHandler).catch(failureHandler || console.error);
+                    };
+                  }
+                });
+              };
+            }
+            return function(...args) {
+              apiRequest(prop2, args).then(successHandler).catch(console.error);
+            };
+          }
+        });
+      };
+    }
+    if (prop === 'withFailureHandler') {
+      return function(failureHandler) {
+        return new Proxy({}, {
+          get(t2, action) {
+            return function(...args) {
+              apiRequest(action, args).catch(failureHandler || console.error);
+            };
+          }
+        });
+      };
+    }
+    return function(...args) { apiRequest(prop, args).catch(console.error); };
+  }
+});
+</script>
+
+<script>
+let chart;
+let latestReport = null;
+let refreshTimer = null;
+let editingRevenueId = null;
+let editingExpenseId = null;
+let authToken = localStorage.getItem('adminToken') || '';
+let currentAdmin = JSON.parse(localStorage.getItem('currentAdmin') || 'null');
+let adminRows = [];
+
+function showTab(id, btn) {
+  if (!currentAdmin) return;
+  if ((id === 'revenues' || id === 'expenses' || id === 'balances') && !canEdit()) id = 'reports';
+  if (currentAdmin && currentAdmin.role === 'viewer' && id !== 'reports') id = 'reports';
+  if (id === 'admins' && !isSuper()) id = 'dashboard';
+  document.querySelectorAll('.content').forEach(el => el.classList.remove('active', 'print-target'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'dashboard') document.getElementById(id).classList.add('print-target');
+  document.querySelectorAll('.sidebar button').forEach(el => el.classList.remove('current'));
+  if (btn) btn.classList.add('current');
+  if (id === 'balances') document.getElementById('balanceYear').value = document.getElementById('yearFilter').value;
+  loadReport(false);
+}
+
+function money(v) { return Number(v || 0).toLocaleString('ar-DZ') + ' دج'; }
+function setMsg(id, text, type) { document.getElementById(id).innerHTML = `<div class="${type}">${text}</div>`; }
+function setStatus(text) { document.getElementById('syncStatus').textContent = text; }
+function escapeHtml(value) { return String(value || '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
+
+function login() {
+  const credentials = { username: loginUsername.value, password: loginPassword.value };
+  setMsg('loginMsg', 'جاري التحقق من بيانات الدخول...', 'success');
+  google.script.run.withSuccessHandler(function(res) {
+    authToken = res.token;
+    currentAdmin = res.admin;
+    localStorage.setItem('adminToken', authToken);
+    localStorage.setItem('currentAdmin', JSON.stringify(currentAdmin));
+    applyRoleUI();
+    renderReport(res.report);
+  }).withFailureHandler(showError('loginMsg')).loginAdmin(credentials);
+}
+
+function logout() {
+  if (authToken) google.script.run.logoutAdmin(authToken);
+  authToken = '';
+  currentAdmin = null;
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('currentAdmin');
+  document.getElementById('appShell').classList.remove('signed-in');
+  document.getElementById('loginScreen').style.display = 'grid';
+}
+
+function canEdit() { return currentAdmin && (currentAdmin.role === 'super' || currentAdmin.role === 'editor'); }
+function isSuper() { return currentAdmin && currentAdmin.role === 'super'; }
+
+function applyRoleUI() {
+  const signed = !!currentAdmin;
+  document.getElementById('loginScreen').style.display = signed ? 'none' : 'grid';
+  document.getElementById('appShell').classList.toggle('signed-in', signed);
+  if (!signed) return;
+  adminBadge.innerHTML = `<b>${escapeHtml(currentAdmin.name)}</b><br><span>${escapeHtml(currentAdmin.roleLabel)}</span>`;
+  document.querySelectorAll('.super-only').forEach(el => el.style.display = isSuper() ? '' : 'none');
+  document.querySelectorAll('#revenues, #expenses, #balances').forEach(el => el.style.display = canEdit() ? '' : 'none');
+  document.querySelectorAll('button[onclick*="revenues"], button[onclick*="expenses"], button[onclick*="balances"]').forEach(el => el.style.display = canEdit() ? '' : 'none');
+  document.querySelectorAll('.edit-btn').forEach(el => el.style.display = canEdit() ? '' : 'none');
+  const navButtons = document.querySelectorAll('.sidebar button');
+  ['dashboard','revenues','expenses','balances'].forEach((tab, index) => { if (navButtons[index]) navButtons[index].style.display = currentAdmin.role === 'viewer' ? 'none' : ''; });
+  if (currentAdmin.role === 'viewer') showTab('reports', navButtons[4]);
+}
+
+function loadAdmins() {
+  if (!isSuper()) return;
+  google.script.run.withSuccessHandler(renderAdmins).withFailureHandler(showError('adminMsg')).listAdmins(authToken);
+}
+
+function addAdminUser() {
+  const data = { name: adminName.value, username: adminUsername.value, password: adminPassword.value, role: adminRole.value };
+  google.script.run.withSuccessHandler(function(list) {
+    setMsg('adminMsg', 'تمت إضافة الأدمن بنجاح', 'success');
+    adminName.value = ''; adminUsername.value = ''; adminPassword.value = '';
+    renderAdmins(list);
+  }).withFailureHandler(showError('adminMsg')).addAdmin(data, authToken);
+}
+
+function renderAdmins(list) {
+  adminRows = list || [];
+  if (!adminRows.length) { adminsTable.innerHTML = '<div class="empty">لا توجد حسابات أدمن</div>'; return; }
+  adminsTable.innerHTML = `<table>
+    <tr><th>الاسم</th><th>اسم الدخول</th><th>الصلاحية</th><th>الحالة</th><th>تاريخ الإضافة</th><th>إجراءات</th></tr>
+    ${adminRows.map((a, index) => `<tr>
+      <td>${escapeHtml(a.name)}</td>
+      <td>${escapeHtml(a.username)}</td>
+      <td>
+        <select id="role_${index}">
+          <option value="super" ${a.role === 'super' ? 'selected' : ''}>ادمن جميع الصلاحيات</option>
+          <option value="editor" ${a.role === 'editor' ? 'selected' : ''}>محرر تعديل</option>
+          <option value="viewer" ${a.role === 'viewer' ? 'selected' : ''}>مشاهد - طباعة التقارير فقط</option>
+        </select>
+      </td>
+      <td>
+        <select id="active_${index}">
+          <option value="true" ${a.active ? 'selected' : ''}>نشط</option>
+          <option value="false" ${!a.active ? 'selected' : ''}>متوقف</option>
+        </select>
+      </td>
+      <td>${escapeHtml(a.createdAt)}</td>
+      <td>
+        <button class="submit secondary" onclick="saveAdminPermissions(${index})">حفظ التعديل</button>
+        <button class="submit danger" onclick="deleteAdminUser(${index})">حذف</button>
+      </td>
+    </tr>`).join('')}
+  </table>`;
+}
+
+function saveAdminPermissions(index) {
+  const a = adminRows[index];
+  if (!a) return;
+  const data = {
+    id: a.id,
+    name: a.name,
+    username: a.username,
+    password: '',
+    role: document.getElementById('role_' + index).value,
+    active: document.getElementById('active_' + index).value === 'true'
+  };
+  google.script.run.withSuccessHandler(function(res) {
+    setMsg('adminMsg', 'تم تعديل صلاحيات المستخدم بنجاح', 'success');
+    if (res.currentAdmin) {
+      currentAdmin = res.currentAdmin;
+      localStorage.setItem('currentAdmin', JSON.stringify(currentAdmin));
+      applyRoleUI();
+    }
+    renderAdmins(res.admins || []);
+  }).withFailureHandler(showError('adminMsg')).updateAdmin(data, authToken);
+}
+
+function deleteAdminUser(index) {
+  const a = adminRows[index];
+  if (!a) return;
+  if (!confirm('هل أنت متأكد من حذف حساب: ' + a.name + '؟')) return;
+  google.script.run.withSuccessHandler(function(list) {
+    setMsg('adminMsg', 'تم حذف المستخدم بنجاح', 'success');
+    renderAdmins(list);
+  }).withFailureHandler(showError('adminMsg')).deleteAdmin(a.id, authToken);
+}
+
+
+function saveRevenue() {
+  const data = { id: editingRevenueId, title: revTitle.value, date: revDate.value, amount: revAmount.value, method: revMethod.value, source: revSource.value, transferNo: revTransfer.value };
+  if (!data.title || !data.date || !data.amount) return setMsg('revMsg', 'يرجى ملء تعيين الإيراد، التاريخ، والمبلغ', 'error');
+  setStatus(editingRevenueId ? 'جاري تعديل الإيراد...' : 'جاري حفظ الإيراد...');
+  const runner = google.script.run.withSuccessHandler(function(report) {
+    setMsg('revMsg', editingRevenueId ? 'تم تعديل الإيراد وتحديث لوحة التحكم' : 'تم حفظ الإيراد وتحديث لوحة التحكم', 'success');
+    cancelRevenueEdit(false);
+    document.getElementById('yearFilter').value = report.year;
+    renderReport(report);
+  }).withFailureHandler(showError('revMsg'));
+  if (editingRevenueId) runner.updateRevenue(data, authToken); else runner.addRevenue(data, authToken);
+}
+
+function saveExpense() {
+  const data = { id: editingExpenseId, title: expTitle.value, date: expDate.value, amount: expAmount.value, method: expMethod.value, category: expCategory.value, transferNo: expTransfer.value };
+  if (!data.title || !data.date || !data.amount) return setMsg('expMsg', 'يرجى ملء تعيين النفقة، التاريخ، والمبلغ', 'error');
+  setStatus(editingExpenseId ? 'جاري تعديل النفقة...' : 'جاري حفظ النفقة...');
+  const runner = google.script.run.withSuccessHandler(function(report) {
+    setMsg('expMsg', editingExpenseId ? 'تم تعديل النفقة وتحديث لوحة التحكم' : 'تم حفظ النفقة وتحديث لوحة التحكم', 'success');
+    cancelExpenseEdit(false);
+    document.getElementById('yearFilter').value = report.year;
+    renderReport(report);
+  }).withFailureHandler(showError('expMsg'));
+  if (editingExpenseId) runner.updateExpense(data, authToken); else runner.addExpense(data, authToken);
+}
+
+function clearRevenueForm() { revTitle.value = ''; revDate.value = ''; revAmount.value = ''; revTransfer.value = ''; }
+function clearExpenseForm() { expTitle.value = ''; expDate.value = ''; expAmount.value = ''; expTransfer.value = ''; }
+
+function cancelRevenueEdit(showMessage = true) {
+  editingRevenueId = null;
+  clearRevenueForm();
+  revSaveBtn.textContent = 'حفظ الإيراد';
+  revCancelBtn.style.display = 'none';
+  revEditNote.classList.remove('active');
+  if (showMessage) setMsg('revMsg', 'تم إلغاء وضع تعديل الإيراد', 'success');
+}
+
+function cancelExpenseEdit(showMessage = true) {
+  editingExpenseId = null;
+  clearExpenseForm();
+  expSaveBtn.textContent = 'حفظ النفقة';
+  expCancelBtn.style.display = 'none';
+  expEditNote.classList.remove('active');
+  if (showMessage) setMsg('expMsg', 'تم إلغاء وضع تعديل النفقة', 'success');
+}
+
+function decodeRow(encoded) {
+  return JSON.parse(decodeURIComponent(encoded));
+}
+
+function editEntry(type, encoded) {
+  const row = decodeRow(encoded);
+  if (type === 'revenue') {
+    editingRevenueId = row.id;
+    revTitle.value = row.title || '';
+    revDate.value = row.date || '';
+    revAmount.value = row.amount || '';
+    revMethod.value = row.method || 'نقدا';
+    revSource.value = row.party || 'أخرى';
+    revTransfer.value = row.transferNo || '';
+    revSaveBtn.textContent = 'حفظ تعديل الإيراد';
+    revCancelBtn.style.display = 'block';
+    revEditNote.classList.add('active');
+    setMsg('revMsg', 'يمكنك تعديل بيانات الإيراد ثم الضغط على حفظ تعديل الإيراد', 'success');
+    showTab('revenues', document.querySelectorAll('.sidebar button')[1]);
+  } else {
+    editingExpenseId = row.id;
+    expTitle.value = row.title || '';
+    expDate.value = row.date || '';
+    expAmount.value = row.amount || '';
+    expMethod.value = row.method || 'نقدا';
+    expCategory.value = row.party || 'أخرى';
+    expTransfer.value = row.transferNo || '';
+    expSaveBtn.textContent = 'حفظ تعديل النفقة';
+    expCancelBtn.style.display = 'block';
+    expEditNote.classList.add('active');
+    setMsg('expMsg', 'يمكنك تعديل بيانات النفقة ثم الضغط على حفظ تعديل النفقة', 'success');
+    showTab('expenses', document.querySelectorAll('.sidebar button')[2]);
+  }
+}
+
+function showError(id) {
+  return function(err) { setMsg(id, 'خطأ: ' + err.message, 'error'); setStatus('تعذر التحديث'); };
+}
+
+function loadOpeningBalance() {
+  const year = balanceYear.value;
+  if (!year) return setMsg('balanceMsg', 'يرجى إدخال السنة', 'error');
+  google.script.run.withSuccessHandler(function(data) {
+    openingBank.value = data.bank; openingPost.value = data.post; openingCash.value = data.cash;
+    setMsg('balanceMsg', 'تم جلب أرصدة السنة', 'success');
+  }).withFailureHandler(showError('balanceMsg')).getOpeningBalance(year);
+}
+
+function saveOpeningBalance() {
+  const data = { year: balanceYear.value, bank: openingBank.value, post: openingPost.value, cash: openingCash.value };
+  google.script.run.withSuccessHandler(function(report) {
+    setMsg('balanceMsg', 'تم حفظ / تعديل الأرصدة وتحديث لوحة التحكم', 'success');
+    yearFilter.value = data.year;
+    renderReport(report);
+  }).withFailureHandler(showError('balanceMsg')).saveOpeningBalance(data, authToken);
+}
+
+function transferBalance() {
+  const year = balanceYear.value;
+  if (!year) return setMsg('balanceMsg', 'يرجى إدخال السنة المراد تحويل الرصيد إليها', 'error');
+  google.script.run.withSuccessHandler(function(report) {
+    setMsg('balanceMsg', 'تم تحويل رصيد السنة السابقة وتحديث لوحة التحكم', 'success');
+    yearFilter.value = year;
+    renderReport(report);
+    loadOpeningBalance();
+  }).withFailureHandler(showError('balanceMsg')).transferPreviousYearBalance(year, authToken);
+}
+
+function loadReport(manual) {
+  const year = yearFilter.value;
+  if (manual) setStatus('جاري التحديث...');
+  google.script.run.withSuccessHandler(renderReport).withFailureHandler(function(err) {
+    const area = document.getElementById('reportArea');
+    if (area) area.innerHTML = `<div class="error">${err.message}</div>`;
+    setStatus('تعذر التحديث');
+  }).getAnnualReport(year);
+}
+
+function renderReport(r) {
+  latestReport = r;
+  document.querySelectorAll('.brand-logo').forEach(img => img.src = r.identity.logoUrl);
+  totalRevenue.innerHTML = money(r.totals.revenues);
+  totalExpense.innerHTML = money(r.totals.expenses);
+  finalBalance.innerHTML = money(r.closing.total);
+  bankBalance.innerHTML = money(r.closing.bank);
+  renderDashboardTables(r);
+  renderAnnualReport(r);
+  drawChart(r);
+  setStatus('آخر تحديث: ' + new Date().toLocaleTimeString('ar-DZ'));
+}
+
+function renderDashboardTables(r) {
+  dashboardRevenues.innerHTML = buildRowsTable(r.revenues, 'الإيراد', 'revenue', canEdit());
+  dashboardExpenses.innerHTML = buildRowsTable(r.expenses, 'النفقة', 'expense', canEdit());
+}
+
+function buildRowsTable(rows, label, type = '', editable = false) {
+  if (!rows || !rows.length) return `<div class="empty">لا توجد بيانات ${label} لهذه السنة</div>`;
+  const actionHeader = editable ? '<th class="no-print">الإجراء</th>' : '';
+  return `<table><tr><th>التاريخ</th><th>التعيين</th><th>المبلغ</th><th>طريقة الدفع</th><th>الجهة</th><th>رقم الحوالة</th>${actionHeader}</tr>${rows.map(row => {
+    const encoded = encodeURIComponent(JSON.stringify(row)).replace(/'/g, '%27');
+    const actions = editable ? `<td class="no-print"><div class="inline-actions"><button class="edit-btn" onclick="editEntry('${type}', '${encoded}')">تعديل</button></div></td>` : '';
+    return `<tr><td>${escapeHtml(row.date)}</td><td>${escapeHtml(row.title)}</td><td>${money(row.amount)}</td><td>${escapeHtml(row.method)}</td><td>${escapeHtml(row.party)}</td><td>${escapeHtml(row.transferNo)}</td>${actions}</tr>`;
+  }).join('')}</table>`;
+}
+
+function renderAnnualReport(r) {
+  reportArea.innerHTML = `
+    <h3>رصيد أول السنة ${r.year}</h3>
+    <table><tr><th>البنك</th><th>البريد</th><th>الصندوق</th><th>المجموع</th></tr><tr><td>${money(r.opening.bank)}</td><td>${money(r.opening.post)}</td><td>${money(r.opening.cash)}</td><td>${money(r.opening.total)}</td></tr></table>
+    <h3>الحركة السنوية</h3>
+    <table><tr><th>إجمالي الإيرادات</th><th>إجمالي النفقات</th><th>النتيجة</th></tr><tr><td>${money(r.totals.revenues)}</td><td>${money(r.totals.expenses)}</td><td>${money(r.totals.balance)}</td></tr></table>
+    <h3>رصيد آخر السنة</h3>
+    <table><tr><th>البنك</th><th>البريد</th><th>الصندوق</th><th>المجموع</th></tr><tr><td>${money(r.closing.bank)}</td><td>${money(r.closing.post)}</td><td>${money(r.closing.cash)}</td><td>${money(r.closing.total)}</td></tr></table>
+    <h3>تفصيل الإيرادات</h3><div class="table-wrap">${buildRowsTable(r.revenues, 'الإيراد')}</div>
+    <h3>تفصيل المصروفات</h3><div class="table-wrap">${buildRowsTable(r.expenses, 'النفقة')}</div>`;
+}
+
+function printSection(id) {
+  document.querySelectorAll('.content').forEach(el => el.classList.remove('print-target'));
+  document.getElementById(id).classList.add('print-target');
+  window.print();
+}
+
+
+function printTableOnly(type) {
+  if (!latestReport) return;
+
+  const identity = latestReport.identity || {};
+  const title = type === 'revenues' ? 'جدول الإيرادات' : 'جدول المصروفات';
+  const rows = type === 'revenues' ? latestReport.revenues : latestReport.expenses;
+  const table = buildRowsTable(rows, title);
+  const total = type === 'revenues' ? latestReport.totals.revenues : latestReport.totals.expenses;
+  const primary = identity.primary || '#2986B0';
+  const primaryLight = identity.primaryLight || '#7ED6D1';
+  const accent = identity.accent || '#F59E0B';
+  const goldDark = identity.goldDark || '#A86417';
+  const dark = identity.dark || '#222222';
+  const logo = identity.logoUrl || '';
+  const orgName = identity.name || 'الجواهر';
+  const year = latestReport.year || document.getElementById('yearFilter').value;
+
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html lang="ar" dir="rtl">
+    <head>
+      <title>${title}</title>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+      <style>
+        :root {
+          --primary: ${primary};
+          --primary-light: ${primaryLight};
+          --accent: ${accent};
+          --gold-dark: ${goldDark};
+          --dark: ${dark};
+          --border: #e5e7eb;
+          --muted: #64748b;
+        }
+        @page { size: A4; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Cairo', Tahoma, Arial, sans-serif; margin: 0; color: var(--dark); background: #fff; }
+        .report-page { width: 100%; }
+        .brand-header {
+          display: flex; align-items: center; justify-content: center; gap: 14px;
+          border-bottom: 3px solid var(--primary); padding-bottom: 14px; margin-bottom: 18px;
+        }
+        .brand-header img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 3px solid var(--accent); background: #fff; }
+        .brand-title { font-size: 25px; font-weight: 800; color: var(--primary); line-height: 1.3; }
+        .brand-subtitle { color: var(--muted); font-weight: 700; }
+        .report-title {
+          text-align: center; margin: 14px 0 16px; padding: 12px 18px; border-radius: 16px;
+          background: linear-gradient(135deg, rgba(41,134,176,0.10), rgba(126,214,209,0.14));
+          border: 1px solid rgba(41,134,176,0.18);
+        }
+        .report-title h1 { margin: 0; color: var(--primary); font-size: 28px; font-weight: 800; }
+        .meta { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; color: var(--muted); font-weight: 700; margin-top: 8px; }
+        .summary-card {
+          margin: 0 auto 16px; max-width: 360px; text-align: center; padding: 14px 18px;
+          border-radius: 16px; border-top: 5px solid var(--primary); background: #fff;
+          box-shadow: 0 8px 22px rgba(0,0,0,0.06); border-left: 1px solid rgba(41,134,176,0.08); border-right: 1px solid rgba(41,134,176,0.08); border-bottom: 1px solid rgba(41,134,176,0.08);
+        }
+        .summary-card .label { color: var(--muted); font-weight: 800; }
+        .summary-card .value { color: var(--accent); font-size: 24px; font-weight: 800; }
+        .table-wrap { overflow: visible; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; overflow: hidden; border-radius: 14px; }
+        th, td { padding: 13px; border-bottom: 1px solid var(--border); text-align: center; font-size: 14px; }
+        th { background: var(--primary); color: white; font-weight: 800; }
+        tr:nth-child(even) td { background: #f8fafc; }
+        .empty { color: var(--muted); text-align: center; padding: 16px; border: 1px solid var(--border); border-radius: 14px; }
+        .footer { margin-top: 24px; padding-top: 10px; border-top: 2px solid var(--primary); color: var(--muted); text-align: center; font-weight: 700; font-size: 12px; }
+    
+
+    .login-screen { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top right, rgba(126,214,209,0.28), transparent 34%), linear-gradient(135deg, #2986B0 0%, #1d5f7d 48%, #222222 100%); }
+    .login-card { width: min(440px, 100%); background: rgba(255,255,255,0.96); border: 1px solid rgba(255,255,255,0.35); border-radius: 28px; padding: 30px; box-shadow: 0 24px 60px rgba(0,0,0,0.22); text-align: center; }
+    .login-card .logo { margin-bottom: 12px; box-shadow: 0 10px 25px rgba(41,134,176,0.22); }
+    .login-card h1 { margin: 0; color: var(--primary); font-size: 30px; font-weight: 800; }
+    .login-card p { margin: 7px 0 18px; color: var(--muted); font-weight: 700; }
+    .login-card input { text-align: right; }
+    .login-help { margin-top: 12px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .app-shell { display: none; }
+    .app-shell.signed-in { display: block; }
+    .admin-badge { margin: 16px 0 12px; padding: 12px; border-radius: 16px; background: rgba(255,255,255,0.10); border: 1px solid rgba(255,255,255,0.14); font-size: 13px; line-height: 1.7; }
+    .logout-btn { background: rgba(185,28,28,0.55) !important; }
+    .role-chip { display:inline-block; padding: 6px 10px; border-radius: 999px; background:#eef6ff; color: var(--primary); font-weight: 800; font-size: 12px; }
+
+    @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .summary-card { box-shadow: none; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="report-page">
+        <div class="brand-header">
+          ${logo ? `<img src="${logo}" alt="${orgName}">` : ''}
+          <div>
+            <div class="brand-title">${orgName}</div>
+            <div class="brand-subtitle">${identity.subtitle || 'لوحة الإدارة المالية'}</div>
+          </div>
+        </div>
+        <div class="report-title">
+          <h1>${title}</h1>
+          <div class="meta"><span>السنة: ${year}</span><span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-DZ')}</span></div>
+        </div>
+        <div class="summary-card"><div class="label">الإجمالي</div><div class="value">${money(total)}</div></div>
+        <div class="table-wrap">${table}</div>
+        <div class="footer">${orgName} - ${title}</div>
+      </div>
+    </body>
+    </html>
+  `);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 300);
+}
+
+function drawChart(r) {
+  const canvas = document.getElementById('financeChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (chart) chart.destroy();
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: ['الإيرادات', 'النفقات', 'البنك', 'البريد', 'الصندوق'], datasets: [{ label: 'التقرير المالي', data: [r.totals.revenues, r.totals.expenses, r.closing.bank, r.closing.post, r.closing.cash], backgroundColor: ['#2986B0', '#F59E0B', '#7ED6D1', '#A86417', '#222222'], borderRadius: 10 }] },
+    options: { responsive: true, plugins: { legend: { labels: { font: { family: 'Cairo' } } } }, scales: { x: { ticks: { font: { family: 'Cairo' } } }, y: { ticks: { font: { family: 'Cairo' } } } } }
+  });
+}
+
+window.onload = function() {
+  const currentYear = new Date().getFullYear();
+  yearFilter.value = currentYear;
+  balanceYear.value = currentYear;
+  applyRoleUI();
+  if (currentAdmin) loadReport(true);
+  refreshTimer = setInterval(() => { if (currentAdmin) loadReport(false); }, 30000);
+};
+</script>
+</body>
+</html>
